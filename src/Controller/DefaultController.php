@@ -16,35 +16,32 @@ namespace T3O\GetTypo3Org\Controller;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Silex\Application;
+use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Regular content and download pages
  */
-class DefaultController
+class DefaultController extends Controller
 {
 
     protected $releaseNotesDir = __DIR__ . '/../../Data/ReleaseNotes/';
     protected $releasesJsonFile = __DIR__ . '/../../Data/releases.json';
 
-    public function showAction(Application $app)
+    public function show()
     {
         $releaseNotes = new \T3O\GetTypo3Org\Service\ReleaseNotes();
         $result = $releaseNotes->getAllReleaseNoteNames();
-        $content = $app['twig']->render('default/show.html.twig', ['result' => $result]);
-        return new Response($content);
+        return $this->render('default/show.html.twig', ['result' => $result]);
     }
 
     /**
      * Outputs the JSON file
      * /json
      *
-     * @param Application $app
-     *
      * @return Response
      */
-    public function jsonAction(Application $app)
+    public function releaseJson()
     {
         $releasesFile = $this->releasesJsonFile;
         $maxAgeForReleases = filemtime($this->releasesJsonFile) + 3600 - time();
@@ -63,12 +60,11 @@ class DefaultController
     /**
      * Display release notes for a version
      *
-     * @param Application $app
      * @param string $folder
      * @param string $version
      * @return Response
      */
-    public function releaseNotesAction(Application $app, string $folder = '', string $version = ''): Response
+    public function releaseNotes(string $folder = '', string $version = ''): Response
     {
         $releaseNotes = new \T3O\GetTypo3Org\Service\ReleaseNotes();
         $result = $releaseNotes->getAllReleaseNoteNames();
@@ -77,17 +73,16 @@ class DefaultController
             $version = $result[$folder][0];
         }
         $current = @file_get_contents($this->releaseNotesDir . $folder . '/' . $version . '.html');
-        $html = $app['twig']->render('default/release-notes.html.twig', ['version' => $version, 'result' => $result, 'current' => $current]);
-        return new Response($html);
+        $html = $this->render('default/release-notes.html.twig', ['version' => $version, 'result' => $result, 'current' => $current]);
+        return $html;
     }
 
     /**
-     * @param Application $app
      * @param string $requestedVersion
      * @param string $requestedFormat
      * @return \Symfony\Component\HttpFoundation\RedirectResponse
      */
-    public function downloadAction(Application $app, $requestedVersion = 'stable', $requestedFormat = 'tar.gz')
+    public function download($requestedVersion = 'stable', $requestedFormat = 'tar.gz')
     {
         $maxAgeForReleases = filemtime($this->releasesJsonFile) + 3600 - time();
         if ($requestedVersion === 'current') {
@@ -101,21 +96,20 @@ class DefaultController
         }
 
         if (empty($redirectData)) {
-            $app->abort(404);
+            $this->createNotFoundException();
         }
         header('Cache-control: max-age=' . $maxAgeForReleases);
-        return $app->redirect($redirectData['url']);
+        return $this->redirect($redirectData['url']);
     }
 
-    public function showVersionAction(Application $app, int $version)
+    public function showVersion(int $version)
     {
         $templateName = 'default/download.html.twig';
-        $jsonPath = __DIR__ . '/../../Resources/data/' . $version . '.json';
+        $jsonPath = __DIR__ . '/../../Data/' . $version . '.json';
         $jsonPath = str_replace(['/','\\'], DIRECTORY_SEPARATOR, $jsonPath);
         $jsonPath = realpath($jsonPath);
         $data = json_decode(file_get_contents($jsonPath), true);
-        $content = $app['twig']->render($templateName, $data);
-        return new Response($content);
+        return $this->render($templateName, $data);
     }
 
     /**
@@ -173,7 +167,7 @@ class DefaultController
         // named version detection
         if ($versionName === 'stable') {
             $versionName = $releases->latest_stable;
-        } elseif ($versionName == 'dev') {
+        } elseif ($versionName === 'dev') {
             die('"dev" version cannot be used anymore. Please stick to "stable"');
         }
         $versionParts = explode('.', $versionName);

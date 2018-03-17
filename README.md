@@ -1,21 +1,13 @@
 # Get.typo3.org
 
+Symfony 4 application for release notes, download redirects and JSON API for releases.
+
 ## Generating new release notes HTML
 
+- Go to `Build/MdConverter`
 - Write release notes as .md file (in release-notes/ReleaseNotes)
 - have pandoc installed
-- add pandoc path to .env file (see .env.tmpl)
+- add pandoc path to .env file (see .env.tmpl) in `Build/MdConverter`
 - do composer install in Build/MdConverter 
-- call php Build/MdConverter/ConvertReleaseNotes from project root
-- wait.
-
-
-## Release-Notes sub-sites
-
-- silex application in release-notes
-- add web server config to redirect release-notes/* to release-notes/index.php
-- do a composer install in release-notes/
-- enjoy
-
-
-`git log 8.7.11..8.7.12 --pretty=format:"* %cd %h %s (%an)" --date=short`
+- call `php Build/MdConverter/ConvertReleaseNotes` from project root
+- wait. commit. push.

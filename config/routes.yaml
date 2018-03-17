@@ -1,0 +1,21 @@
+root:
+    path: /
+    controller: T3O\GetTypo3Org\Controller\DefaultController::show
+json:
+    path: /json
+    controller: T3O\GetTypo3Org\Controller\DefaultController::releaseJson
+version:
+    path: /version/{version}
+    controller: T3O\GetTypo3Org\Controller\DefaultController::showVersion
+releasenotes:
+    path: /release-notes
+    controller: T3O\GetTypo3Org\Controller\DefaultController::releaseNotes
+specificversion:
+    path: /{requestedVersion}
+    controller: T3O\GetTypo3Org\Controller\DefaultController::download
+versionandformat:
+    path: /{requestedVersion}/{requestedFormat}
+    controller: T3O\GetTypo3Org\Controller\DefaultController::download
+release-notes-for-version:
+    path: /release-notes/{folder}/{version}
+    controller: T3O\GetTypo3Org\Controller\DefaultController::releaseNotes
