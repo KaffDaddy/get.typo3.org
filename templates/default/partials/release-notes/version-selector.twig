@@ -1,0 +1,24 @@
+<div class="container-fluid b_container b_container--grey b_container--slim">
+    <div class="container b_container__download-version">
+        <form class="" action="">
+            <div class="form-group row">
+                <label>
+                    <strong>Go to another version:</strong>
+                </label>
+                <div class="col-sm-4">
+                    <select onchange="if (this.value) window.location.href= '{{ path('root') }}release-notes/' + this.value;"
+                            style="margin-bottom:1.5em;">
+                        <option value="">select a version</option>
+                        {% for version,entry in result %}
+                            <optgroup label="{{ version|replace({'.0000': ''}) }}">
+                                {% for note in entry.releases %}
+                                    <option value="{{ note.version }}">{{ note.version }}</option>
+                                {% endfor %}
+                            </optgroup>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

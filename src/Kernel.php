@@ -1,6 +1,6 @@
 <?php
 
-namespace T3O\GetTypo3Org;
+namespace App;
 
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Component\Config\Loader\LoaderInterface;

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace T3O\GetTypo3Org\Controller;
+namespace App\Controller;
 
 /*
  * This file is part of the TYPO3 project.
@@ -16,7 +16,11 @@ namespace T3O\GetTypo3Org\Controller;
  * The TYPO3 project - inspiring people to share!
  */
 
+use App\Entity\MajorVersion;
+use App\Entity\Release;
+use App\Service\LegacyDataService;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\Cache\Simple\FilesystemCache;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -27,10 +31,19 @@ class DefaultController extends Controller
 
     protected $releaseNotesDir = __DIR__ . '/../../Data/ReleaseNotes/';
     protected $releasesJsonFile = __DIR__ . '/../../Data/releases.json';
+    /**
+     * @var \App\Service\LegacyDataService
+     */
+    private $legacyDataService;
+
+    public function __construct(LegacyDataService $legacyDataService)
+    {
+        $this->legacyDataService = $legacyDataService;
+    }
 
     public function show()
     {
-        $releaseNotes = new \T3O\GetTypo3Org\Service\ReleaseNotes();
+        $releaseNotes = new \App\Service\ReleaseNotes();
         $result = $releaseNotes->getAllReleaseNoteNames();
         return $this->render('default/show.html.twig', ['result' => $result]);
     }
@@ -38,21 +51,19 @@ class DefaultController extends Controller
     /**
      * Outputs the JSON file
      * /json
+     * Legacy end point
      *
      * @return Response
      */
-    public function releaseJson()
+    public function releaseJson(): Response
     {
-        $releasesFile = $this->releasesJsonFile;
         $maxAgeForReleases = filemtime($this->releasesJsonFile) + 3600 - time();
-
-        $content = file_get_contents($releasesFile);
-
+        $content = $this->legacyDataService->getReleaseJson();
         $headers = [
             'Content-type' => 'application/json',
             'Access-Control-Allow-Origin' => '*',
-            'Cache-control' => 'max-age=' . $maxAgeForReleases
-	];
+            'Cache-control' => 'max-age=' . $maxAgeForReleases,
+        ];
         return new Response($content, 200, $headers);
     }
 
@@ -60,20 +71,25 @@ class DefaultController extends Controller
     /**
      * Display release notes for a version
      *
-     * @param string $folder
      * @param string $version
      * @return Response
      */
-    public function releaseNotes(string $folder = '', string $version = ''): Response
+    public function releaseNotes(string $version = ''): Response
     {
-        $releaseNotes = new \T3O\GetTypo3Org\Service\ReleaseNotes();
-        $result = $releaseNotes->getAllReleaseNoteNames();
-        if ($folder === '' && $version === '') {
-            $folder = key($result);
-            $version = $result[$folder][0];
+        $cache = new FilesystemCache();
+        $version = str_replace('TYPO3_CMS_', '', $version);
+        if ($cache->has('releaseNotes.' . $version)) {
+            $html = $cache->get('releaseNotes.' . $version);
+        } else {
+            /** @var \App\Repository\MajorVersionRepository $mVersionRepo */
+            $mVersionRepo = $this->getDoctrine()->getRepository(MajorVersion::class);
+            $majors = $mVersionRepo->findAllGroupedByMajor();
+
+            $releaseRepository = $this->getDoctrine()->getRepository(Release::class);
+            $release = $releaseRepository->findOneBy(['version' => $version]);
+            $html = $this->render('default/release-notes.html.twig', ['result' => $majors, 'current' => $release]);
+            $cache->set('releaseNotes.' . $version, $html);
         }
-        $current = @file_get_contents($this->releaseNotesDir . $folder . '/' . $version . '.html');
-        $html = $this->render('default/release-notes.html.twig', ['version' => $version, 'result' => $result, 'current' => $current]);
         return $html;
     }
 
@@ -105,10 +121,12 @@ class DefaultController extends Controller
     public function showVersion(int $version)
     {
         $templateName = 'default/download.html.twig';
-        $jsonPath = __DIR__ . '/../../Data/' . $version . '.json';
-        $jsonPath = str_replace(['/','\\'], DIRECTORY_SEPARATOR, $jsonPath);
-        $jsonPath = realpath($jsonPath);
-        $data = json_decode(file_get_contents($jsonPath), true);
+        /** @var \App\Repository\MajorVersionRepository $repository */
+        $repository = $this->getDoctrine()->getRepository(MajorVersion::class);
+        $data = $repository->findOneBy(['version' => $version]);
+        if ($data instanceof MajorVersion) {
+            $data = $data->toArray();
+        }
         return $this->render($templateName, $data);
     }
 
@@ -116,7 +134,6 @@ class DefaultController extends Controller
      * @param string $versionName
      * @param string $format
      * @param string $releasesFile
-     *
      * @return array
      */
     private function getSourceForgeRedirect($versionName, $format, $releasesFile)
@@ -219,7 +236,6 @@ class DefaultController extends Controller
      * @param string $versionName
      * @param string $format
      * @param string $releasesFile
-     *
      * @return array
      */
     private function getFedextRedirect($versionName, $format, $releasesFile)

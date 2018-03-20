@@ -6,40 +6,25 @@
         <img src="{{ path('root') }}assets/Gett3o/Assets/keyvisual_image.png" alt="" class="b_keyvisual__image">
         <div class="b_keyvisual__info">
             <h1>Release Notes</h1>
-            <h3>TYPO3 {{ version |replace({'TYPO3_CMS_': '', 'TYPO3_': ''}) }}</h3>
+            <h3>TYPO3 {{ current.version }}</h3>
         </div>
     </div>
 
-    <div class="container-fluid b_container b_container--grey b_container--slim">
-        <div class="container b_container__download-version">
-            <form class="" action="">
-                <div class="form-group row">
-                    <label>
-                        <strong>Go to another version:</strong>
-                    </label>
-                    <div class="col-sm-4">
-                        <select onchange="if (this.value) window.location.href= '{{ path('root') }}release-notes/' + this.value;"
-                                style="margin-bottom:1.5em;">
-                            <option value="">select a version</option>
-                            {% for version,entry in result %}
-                                <optgroup label="{{ version }}">
-                                    {% for note in entry %}
-                                        <option value="{{ version }}/{{ note }}">{{ note | replace({'_CMS_': ' ', '_': ' '}) }}</option>
-                                    {% endfor %}
-                                </optgroup>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
+    {% include 'default/partials/release-notes/version-selector.twig' %}
 
     <div class="container-fluid b_container">
-        <div class="container b_container--downloads">
-            <div class="col-md-12 b_text__col">
-                {{ current|raw }}
+        {% if current.releaseNotes.legacyContent %}
+            <div class="container b_container--downloads">
+                <div class="col-md-12 b_text__col">
+                    {{ current.releaseNotes.legacyContent|parsedown|raw }}
+                </div>
             </div>
-        </div>
+        {% else %}
+            {% include 'default/partials/release-notes/introduction.twig' %}
+            {% include 'default/partials/release-notes/news.twig' %}
+            {% include 'default/partials/release-notes/checksums.twig' %}
+            {% include 'default/partials/release-notes/upgrading.twig' %}
+            {% include 'default/partials/release-notes/changes.twig' %}
+        {% endif %}
     </div>
 {% endblock %}

@@ -4,16 +4,16 @@
             <h2 class="b_headline">Downloads</h2>
             <p class="col-md-7">{{ description }}</p>
             <div class="b_link-list">
-                <a href="{{ path('release-notes-for-version', {'folder': version.folder, 'version': version.releaseNotes }) }}"
+                <a href="{{ path('release-notes-for-version', {'version': latestRelease.version }) }}"
                    class="b_link"><i class="material-icons b_icon--link">keyboard_arrow_right</i>Release
                     Notes</a>
-                <a href="https://docs.typo3.org/typo3cms/InstallationGuide/{{ version.lts }}/" class="b_link"><i
+                <a href="https://docs.typo3.org/typo3cms/InstallationGuide/{{ lts }}/" class="b_link"><i
                             class="material-icons b_icon--link">keyboard_arrow_right</i>Installation
                     Guide</a>
-                <a href="https://docs.typo3.org/typo3cms/GettingStartedTutorial/{{ version.lts }}/" class="b_link"><i
+                <a href="https://docs.typo3.org/typo3cms/GettingStartedTutorial/{{ lts }}/" class="b_link"><i
                             class="material-icons b_icon--link">keyboard_arrow_right</i>Getting
                     started</a>
-                <a href="https://typo3.azureedge.net/typo3/{{ version.full }}/README.md" class="b_link"><i
+                <a href="https://typo3.azureedge.net/typo3/{{ latestRelease.version }}/README.md" class="b_link"><i
                             class="material-icons b_icon--link">keyboard_arrow_right</i>Download README (incl.
                     signatures)</a>
             </div>
@@ -33,10 +33,10 @@
                 </div>
                 <div id="exampleAccordion1" class="collapse" role="tabpanel">
                     <p class="mb-3 b_accordion__content">
-                    {% if version.major == 9 %}
+                    {% if version == 9 %}
                         <pre>composer require typo3/minimal</pre>
                     {% else %}
-                        <pre>composer create-project typo3/cms-base-distribution my-new-project {{ version.lts }}</pre>
+                        <pre>composer create-project typo3/cms-base-distribution my-new-project {{ lts }}</pre>
                     {% endif %}
                     </p>
                 </div>
@@ -55,10 +55,10 @@
                     <p class="mb-3 b_accordion__content">
                     <pre>
 # Using wget
-wget --content-disposition get.typo3.org/{{ version.major }}
+wget --content-disposition get.typo3.org/{{ version }}
 
 # Using cURL (e.g., when wget fails with SSL error)
-curl -L -o typo3_src.tgz get.typo3.org/{{ version.major }}
+curl -L -o typo3_src.tgz get.typo3.org/{{ version }}
                             </pre>
                     In case you are encountering SSL warnings (host name mismatch), please make sure that you are
                     using a client that supports Server Name Indication (SNI). This especially affects old versions
@@ -94,16 +94,16 @@ curl -L -o typo3_src.tgz get.typo3.org/{{ version.major }}
                 </div>
                 <div id="exampleAccordion4" class="collapse" role="tabpanel">
                     <p class="mb-3 b_accordion__content">
-                        <a href="https://get.typo3.org/{{ version.major }}" class="b_link"><i
-                                    class="material-icons b_icon--link">file_download</i>get.typo3.org/{{ version.major }}
+                        <a href="https://get.typo3.org/{{ version }}" class="b_link"><i
+                                    class="material-icons b_icon--link">file_download</i>get.typo3.org/{{ version }}
                         </a>
-                        <a href="https://get.typo3.org/{{ version.major }}/zip" class="b_link"><i
-                                    class="material-icons b_icon--link">file_download</i>get.typo3.org/{{ version.major }}
+                        <a href="https://get.typo3.org/{{ version }}/zip" class="b_link"><i
+                                    class="material-icons b_icon--link">file_download</i>get.typo3.org/{{ version }}
                             /zip</a>
                     </p>
                 </div>
             </div>
         </div>
     </div>
-    {% include 'default/partials/system-requirements.html.twig' %}
+    {% include 'default/partials/system-requirements.html.twig' with {'systemRequirements': requirements }%}
 </div>
