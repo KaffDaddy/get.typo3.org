@@ -3,43 +3,64 @@
 namespace App\Entity;
 
 use App\Entity\Embeddables\Package;
+use App\Entity\Embeddables\ReleaseNotes;
 use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation as Serializer;
+use Swagger\Annotations as SWG;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * @ORM\Entity()
+ * @ORM\Entity(repositoryClass="ReleaseRepository")
  */
 class Release implements \JsonSerializable
 {
     private $baseUrl = 'https://get.typo3.org/';
 
     /**
+     * Version in a semver/version_compare compatible format
+     *
+     * @SWG\Property(example="8.7.12")
      * @ORM\Id()
      * @ORM\Column(type="string")
      * @var string
+     * @Serializer\Groups({"content", "data"})
+     * @Assert\Regex("/^(\d+\.\d+\.\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/")
      */
     private $version;
 
     /**
      * @ORM\Column(type="datetime")
      * @var \DateTime
+     * @Serializer\Groups({"data", "content"})
+     * @Assert\DateTime(format="Y-m-d\TH:i:sP")
+     * @Serializer\Type("DateTime<'Y-m-d\TH:i:sP'>")
+     * @SWG\Property(example="2017-12-12T16:48:22 UTC")
      */
     private $date;
 
     /**
      * @ORM\Column(type="string")
      * @var string
+     * @Serializer\Groups({"data"})
+     * @Assert\Choice({"regular", "development", "security"})
      */
     private $type;
 
     /**
      * @ORM\Embedded(class = "App\Entity\Embeddables\Package")
      * @var Package
+     * @Serializer\Type("App\Entity\Embeddables\Package")
+     * @Serializer\Groups({"data"})
+     * @Assert\Valid
      */
     private $tarPackage;
 
     /**
      * @ORM\Embedded(class = "App\Entity\Embeddables\Package")
-     * @var Package
+     * @var \App\Entity\Embeddables\Package
+     * @Serializer\Type("App\Entity\Embeddables\Package")
+     * @Serializer\Groups({"data"})
+     * @Assert\Valid
      */
     private $zipPackage;
 
@@ -47,12 +68,17 @@ class Release implements \JsonSerializable
      * @ORM\ManyToOne(targetEntity="MajorVersion", inversedBy="releases")
      * @ORM\JoinColumn(name="major_version", referencedColumnName="version")
      * @var string|\App\Entity\MajorVersion
+     * @Assert\Valid
+     * @Assert\NotNull
      */
     private $majorVersion;
 
     /**
      * @ORM\Embedded(class = "App\Entity\Embeddables\ReleaseNotes")
      * @var Package
+     * @Serializer\Type("App\Entity\Embeddables\ReleaseNotes")
+     * @Serializer\Groups({"content", "putcontent"})
+     * @Assert\Valid
      */
     private $releaseNotes;
 
@@ -92,6 +118,15 @@ class Release implements \JsonSerializable
         return $this->zipPackage;
     }
 
+    public function setMajorVersion(MajorVersion $majorVersion): void
+    {
+        $this->majorVersion = $majorVersion;
+    }
+
+    public function setReleaseNotes(ReleaseNotes $releaseNotes): void
+    {
+        $this->releaseNotes = $releaseNotes;
+    }
 
     /**
      * Specify data which should be serialized to JSON
