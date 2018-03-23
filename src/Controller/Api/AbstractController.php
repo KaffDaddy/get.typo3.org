@@ -3,9 +3,11 @@ declare(strict_types=1);
 
 namespace App\Controller\Api;
 
+use App\CacheKernel;
 use App\Entity\MajorVersion;
 use App\Entity\Release;
 use App\Entity\Requirement;
+use App\Kernel;
 use Doctrine\Common\Util\Inflector;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
@@ -17,6 +19,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\HttpCache\HttpCache;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Swagger\Annotations as SWG;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -93,14 +97,14 @@ class AbstractController extends Controller
         }
     }
 
-    protected function getMajorVersionByReleaseVersion(string $version): ?MajorVersion
+    protected function getMajorVersionByReleaseVersion(string $version): MajorVersion
     {
         $majorVersion = substr($version, 0, strpos($version, '.'));
         $mventity = $this->getDoctrine()->getManager()->getRepository(MajorVersion::class)->findOneBy(
             ['version' => $majorVersion]
         );
         if (null === $mventity) {
-            throw new BadRequestHttpException('Major version data for version ' . $majorVersion . ' does not exist.');
+            throw new NotFoundHttpException('Major version data for version ' . $majorVersion . ' does not exist.');
         }
         return $mventity;
     }

@@ -7,6 +7,7 @@ use App\Entity\Embeddables\ReleaseNotes;
 use App\Entity\Release;
 use JMS\Serializer\SerializationContext;
 use Nelmio\ApiDocBundle\Annotation\Model;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -30,6 +31,7 @@ class ReleaseController extends AbstractController
      * Get information about all TYPO3 releases or a specific release
      * @Route("/", methods={"GET"})
      * @Route("/{version}", methods={"GET"}, name="release_show")
+     * @Cache(expires="tomorrow", public=true)
      * @SWG\Response(
      *     response=200,
      *     description="Returns TYPO3 Release(s)",
@@ -53,7 +55,7 @@ class ReleaseController extends AbstractController
      * @param null|string $version Specific TYPO3 Version to fetch
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function getRelease(?string $version): JsonResponse
+    public function getRelease(?string $version, Request $request): JsonResponse
     {
         $releaseRepo = $this->getDoctrine()->getRepository(Release::class);
         if ($version) {
@@ -67,7 +69,10 @@ class ReleaseController extends AbstractController
             'json',
             SerializationContext::create()->setGroups(['data'])
         );
-        return new JsonResponse($json, 200, [], true);
+        $response =  new JsonResponse($json, 200, [], true);
+        $response->setEtag(md5($json));
+        $response->isNotModified($request);
+        return $response;
     }
 
     /**
@@ -91,6 +96,10 @@ class ReleaseController extends AbstractController
      * @SWG\Response(
      *     response=401,
      *     description="Unauthorized."
+     * )
+     * @SWG\Response(
+     *     response=404,
+     *     description="Corresponding major version not found."
      * )
      * @SWG\Response(
      *     response=409,
@@ -188,6 +197,7 @@ class ReleaseController extends AbstractController
     /**
      * Get TYPO3 Release Content
      * @Route("/{version}/content", methods={"GET"})
+     * @Cache(expires="tomorrow", public=true)
      * @SWG\Response(
      *     response=200,
      *     description="Returns TYPO3 Release content",
@@ -211,7 +221,7 @@ class ReleaseController extends AbstractController
      * @param string $version
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function getContentForVersion(string $version): JsonResponse
+    public function getContentForVersion(string $version, Request $request): JsonResponse
     {
         $this->checkVersionFormat($version);
         $entity = $this->getReleaseByVersion($version);
@@ -220,7 +230,10 @@ class ReleaseController extends AbstractController
             'json',
             SerializationContext::create()->setGroups(['content'])
         );
-        return new JsonResponse($json, Response::HTTP_OK, [], true);
+        $response = new JsonResponse($json, Response::HTTP_OK, [], true);
+        $response->setEtag(md5($json));
+        $response->isNotModified($request);
+        return $response;
     }
 
 
@@ -321,7 +334,6 @@ class ReleaseController extends AbstractController
         $em = $this->getDoctrine()->getManager();
         $em->remove($entity);
         $em->flush();
-
         return $this->json([], Response::HTTP_NO_CONTENT);
     }
 

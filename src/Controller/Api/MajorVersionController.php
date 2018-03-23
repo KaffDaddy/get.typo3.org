@@ -8,6 +8,7 @@ use Nelmio\ApiDocBundle\Annotation\Security as DocSecurity;
 use App\Entity\MajorVersion;
 use JMS\Serializer\SerializationContext;
 use Nelmio\ApiDocBundle\Annotation\Model;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -28,6 +29,7 @@ class MajorVersionController extends AbstractController
     /**
      * Get information about a major TYPO3 version
      * @Route("/", methods={"GET"})
+     * @Cache(expires="tomorrow", public=true)
      * @SWG\Response(
      *     response=200,
      *     description="Returns major TYPO3 version information",
@@ -42,7 +44,7 @@ class MajorVersionController extends AbstractController
      *
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function getMajorReleases(): JsonResponse
+    public function getMajorReleases(Request $request): JsonResponse
     {
         $releaseRepo = $this->getDoctrine()->getRepository(MajorVersion::class);
         $majors = $releaseRepo->findAll();
@@ -51,12 +53,16 @@ class MajorVersionController extends AbstractController
             'json',
             SerializationContext::create()->setGroups(['content'])
         );
-        return new JsonResponse($json, 200, [], true);
+        $response = new JsonResponse($json, 200, [], true);
+        $response->setEtag(md5($json));
+        $response->isNotModified($request);
+        return $response;
     }
 
     /**
      * Get hard facts of a major TYPO3 Release
      * @Route("/{version}", methods={"GET"}, name="majorVersion_show")
+     * @Cache(expires="tomorrow", public=true)
      * @SWG\Response(
      *     response=200,
      *     description="Returns major TYPO3 version information",
@@ -77,7 +83,7 @@ class MajorVersionController extends AbstractController
      * @param null|string $version Specific TYPO3 Version to fetch
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function getMajorRelease(string $version): JsonResponse
+    public function getMajorRelease(string $version, Request $request): JsonResponse
     {
         $this->checkMajorVersionFormat($version);
         $repo = $this->getDoctrine()->getRepository(MajorVersion::class);
@@ -90,7 +96,10 @@ class MajorVersionController extends AbstractController
             'json',
             SerializationContext::create()->setGroups(['content'])
         );
-        return new JsonResponse($json, Response::HTTP_OK, [], true);
+        $response =  new JsonResponse($json, Response::HTTP_OK, [], true);
+        $response->setEtag(md5($json));
+        $response->isNotModified($request);
+        return $response;
     }
 
     /**
@@ -252,6 +261,4 @@ class MajorVersionController extends AbstractController
 
         return $this->json([], Response::HTTP_NO_CONTENT);
     }
-
-
 }

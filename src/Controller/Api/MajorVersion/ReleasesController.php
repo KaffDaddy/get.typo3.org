@@ -8,8 +8,10 @@ use App\Controller\Api\AbstractController;
 use App\Entity\MajorVersion;
 use JMS\Serializer\SerializationContext;
 use Nelmio\ApiDocBundle\Annotation\Model;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
 use Swagger\Annotations as SWG;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -22,6 +24,7 @@ class ReleasesController extends AbstractController
     /**
      * Get releases by major version
      * @Route("/", methods={"GET"})
+     * @Cache(expires="tomorrow", public=true)
      * @SWG\Response(
      *     response=200,
      *     description="Returns TYPO3 releases by major version",
@@ -46,7 +49,7 @@ class ReleasesController extends AbstractController
      * @param string $version Specific TYPO3 Version to fetch
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function getReleasesByMajorVersion(string $version): JsonResponse
+    public function getReleasesByMajorVersion(string $version, Request $request): JsonResponse
     {
         $this->checkMajorVersionFormat($version);
         $releaseRepo = $this->getDoctrine()->getRepository(MajorVersion::class);
@@ -59,12 +62,16 @@ class ReleasesController extends AbstractController
             'json',
             SerializationContext::create()->setGroups(['data'])
         );
-        return new JsonResponse($json, 200, [], true);
+        $response = new JsonResponse($json, 200, [], true);
+        $response->setEtag(md5($json));
+        $response->isNotModified($request);
+        return $response;
     }
 
     /**
      * Get latest release of a major version
      * @Route("/latest", methods={"GET"})
+     * @Cache(expires="tomorrow", public=true)
      * @SWG\Response(
      *     response=200,
      *     description="Returns data on latest TYPO3 release of a major version",
@@ -86,7 +93,7 @@ class ReleasesController extends AbstractController
      * @param null|string $version Specific TYPO3 Version to fetch
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function getLatestReleaseByMajorVersion(string $version): JsonResponse
+    public function getLatestReleaseByMajorVersion(string $version, Request $request): JsonResponse
     {
         $this->checkMajorVersionFormat($version);
         $releaseRepo = $this->getDoctrine()->getRepository(MajorVersion::class);
@@ -99,12 +106,16 @@ class ReleasesController extends AbstractController
             'json',
             SerializationContext::create()->setGroups(['data'])
         );
-        return new JsonResponse($json, 200, [], true);
+        $response = new JsonResponse($json, 200, [], true);
+        $response->setEtag(md5($json));
+        $response->isNotModified($request);
+        return $response;
     }
 
     /**
      * Get latest release of a major version
      * @Route("/latest/content", methods={"GET"})
+     * @Cache(expires="tomorrow", public=true)
      * @SWG\Response(
      *     response=200,
      *     description="Returns major TYPO3 version information",
@@ -127,7 +138,7 @@ class ReleasesController extends AbstractController
      * @param string $version Specific TYPO3 Version to fetch
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function getLatestReleaseContentByMajorVersion(string $version): JsonResponse
+    public function getLatestReleaseContentByMajorVersion(string $version, Request $request): JsonResponse
     {
         $this->checkMajorVersionFormat($version);
         $releaseRepo = $this->getDoctrine()->getRepository(MajorVersion::class);
@@ -140,6 +151,9 @@ class ReleasesController extends AbstractController
             'json',
             SerializationContext::create()->setGroups(['content'])
         );
-        return new JsonResponse($json, 200, [], true);
+        $response = new JsonResponse($json, 200, [], true);
+        $response->setEtag(md5($json));
+        $response->isNotModified($request);
+        return $response;
     }
 }

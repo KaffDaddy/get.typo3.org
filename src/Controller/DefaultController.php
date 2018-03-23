@@ -19,9 +19,13 @@ namespace App\Controller;
 use App\Entity\MajorVersion;
 use App\Entity\Release;
 use App\Service\LegacyDataService;
+use App\Service\ReleaseNotes;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\Cache\Simple\FilesystemCache;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
 
 /**
  * Regular content and download pages
@@ -41,11 +45,20 @@ class DefaultController extends Controller
         $this->legacyDataService = $legacyDataService;
     }
 
-    public function show()
+    /**
+     * @Route("/", methods={"GET"}, name="root")
+     * @Cache(expires="tomorrow", public=true)
+     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function show(Request $request)
     {
-        $releaseNotes = new \App\Service\ReleaseNotes();
-        $result = $releaseNotes->getAllReleaseNoteNames();
-        return $this->render('default/show.html.twig', ['result' => $result]);
+        $majorVersionRepository = $this->getDoctrine()->getRepository(MajorVersion::class);
+        $majorVersions = $majorVersionRepository->findAllActive();
+        $response = $this->render('default/show.html.twig', ['majorVersions' => $majorVersions]);
+        $response->setEtag(md5(serialize($majorVersions)));
+        $response->isNotModified($request);
+        return $response;
     }
 
     /**
@@ -53,6 +66,7 @@ class DefaultController extends Controller
      * /json
      * Legacy end point
      *
+     * @Route("/json", methods={"GET"})
      * @return Response
      */
     public function releaseJson(): Response
@@ -70,30 +84,61 @@ class DefaultController extends Controller
 
     /**
      * Display release notes for a version
+     * @Cache(expires="tomorrow", public=true)
+     * @Route("/release-notes", methods={"GET"}, name="release-notes")
+     * @Route("/release-notes/{version}", methods={"GET"}, name="release-notes-for-version")
+     * @Route("/release-notes/{folder}/{version}", methods={"GET"}, name="legacy-release-notes-for-version")
      *
      * @param string $version
      * @return Response
      */
-    public function releaseNotes(string $version = ''): Response
+    public function releaseNotes(string $version = '', Request $request): Response
     {
-        $cache = new FilesystemCache();
         $version = str_replace('TYPO3_CMS_', '', $version);
-        if ($cache->has('releaseNotes.' . $version)) {
-            $html = $cache->get('releaseNotes.' . $version);
-        } else {
-            /** @var \App\Repository\MajorVersionRepository $mVersionRepo */
-            $mVersionRepo = $this->getDoctrine()->getRepository(MajorVersion::class);
-            $majors = $mVersionRepo->findAllGroupedByMajor();
 
-            $releaseRepository = $this->getDoctrine()->getRepository(Release::class);
-            $release = $releaseRepository->findOneBy(['version' => $version]);
-            $html = $this->render('default/release-notes.html.twig', ['result' => $majors, 'current' => $release]);
-            $cache->set('releaseNotes.' . $version, $html);
+        /** @var \App\Repository\MajorVersionRepository $mVersionRepo */
+        $mVersionRepo = $this->getDoctrine()->getRepository(MajorVersion::class);
+        $majors = $mVersionRepo->findAllGroupedByMajor();
+
+        $releaseRepository = $this->getDoctrine()->getRepository(Release::class);
+        $release = $releaseRepository->findOneBy(['version' => $version]);
+        $data = ['result' => $majors, 'current' => $release];
+        $response = $this->render('default/release-notes.html.twig', $data);
+        $response->setEtag(md5(serialize($data)));
+        $response->isNotModified($request);
+        return $response;
+    }
+
+
+    /**
+     * @Route("/version/{version}", methods={"GET"}, name="version")
+     * @Cache(expires="tomorrow", public=true)
+     * @param int $version
+     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function showVersion(int $version, Request $request): Response
+    {
+        $templateName = 'default/download.html.twig';
+        /** @var \App\Repository\MajorVersionRepository $repository */
+        $repository = $this->getDoctrine()->getRepository(MajorVersion::class);
+        $data = $repository->findOneBy(['version' => $version]);
+        if ($data instanceof MajorVersion) {
+            $data = $data->toArray();
         }
-        return $html;
+        $response = $this->render($templateName, $data);
+        $response->setEtag(md5(serialize($data)));
+        $response->isNotModified($request);
+        return $response;
     }
 
     /**
+     * @Route("/{requestedVersion}", methods={"GET"}, name="specificversion")
+     * @Route("/{requestedVersion}/{requestedFormat}",
+     *     methods={"GET"},
+     *     name="versionandformat",
+     *     condition="context.getPathInfo() matches '#^\\/?((?:stable|current)|(\\d+\\.\\d+\\.\\d+)(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?)\\/?(?:tar\\.gz|zip)?$#'"
+     * )
      * @param string $requestedVersion
      * @param string $requestedFormat
      * @return \Symfony\Component\HttpFoundation\RedirectResponse
@@ -111,24 +156,13 @@ class DefaultController extends Controller
             $redirectData = $this->getFedextRedirect($requestedVersion, $requestedFormat, $this->releasesJsonFile);
         }
 
-        if (empty($redirectData)) {
-            $this->createNotFoundException();
+        if (!isset($redirectData['url'])) {
+            throw $this->createNotFoundException();
         }
         header('Cache-control: max-age=' . $maxAgeForReleases);
         return $this->redirect($redirectData['url']);
     }
 
-    public function showVersion(int $version)
-    {
-        $templateName = 'default/download.html.twig';
-        /** @var \App\Repository\MajorVersionRepository $repository */
-        $repository = $this->getDoctrine()->getRepository(MajorVersion::class);
-        $data = $repository->findOneBy(['version' => $version]);
-        if ($data instanceof MajorVersion) {
-            $data = $data->toArray();
-        }
-        return $this->render($templateName, $data);
-    }
 
     /**
      * @param string $versionName
