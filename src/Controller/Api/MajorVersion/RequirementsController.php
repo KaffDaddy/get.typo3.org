@@ -4,13 +4,10 @@ declare(strict_types=1);
 namespace App\Controller\Api\MajorVersion;
 
 use App\Controller\Api\AbstractController;
-use App\Entity\MajorVersion;
 use App\Entity\Requirement;
-use Doctrine\Common\Util\Inflector;
 use JMS\Serializer\SerializationContext;
-use JMS\Serializer\SerializerInterface;
 use Nelmio\ApiDocBundle\Annotation\Model;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,6 +17,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Swagger\Annotations as SWG;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Nelmio\ApiDocBundle\Annotation\Security as DocSecurity;
 
 /**
  * @Route("/v1/api/major/{version}/requirement", defaults={"_format"="json"})
@@ -29,6 +27,8 @@ class RequirementsController extends AbstractController
     /**
      * Create new major TYPO3 version requirement
      * @Route("/", methods={"POST"})
+     * @Security("has_role('ROLE_ADMIN')")
+     * @DocSecurity(name="Basic")
      * @SWG\Response(
      *     response=201,
      *     description="Successfully created",
@@ -41,6 +41,10 @@ class RequirementsController extends AbstractController
      * @SWG\Response(
      *     response=400,
      *     description="Request malformed."
+     * )
+     * @SWG\Response(
+     *     response=401,
+     *     description="Unauthorized."
      * )
      * @SWG\Response(
      *     response=409,
@@ -98,6 +102,8 @@ class RequirementsController extends AbstractController
     /**
      * Update requirement of major TYPO3 version
      * @Route("/", methods={"PATCH"})
+     * @Security("has_role('ROLE_ADMIN')")
+     * @DocSecurity(name="Basic")
      * @SWG\Response(
      *     response=200,
      *     description="Successfully created",
@@ -106,6 +112,10 @@ class RequirementsController extends AbstractController
      * @SWG\Response(
      *     response=400,
      *     description="Request malformed."
+     * )
+     * @SWG\Response(
+     *     response=401,
+     *     description="Unauthorized."
      * )
      * @SWG\Response(
      *     response=409,
@@ -165,6 +175,8 @@ class RequirementsController extends AbstractController
     /**
      * Delete requirement of major TYPO3 version
      * @Route("/{category}/{name}", methods={"DELETE"})
+     * @Security("has_role('ROLE_ADMIN')")
+     * @DocSecurity(name="Basic")
      * @SWG\Response(
      *     response=204,
      *     description="Successfully deleted"
@@ -172,6 +184,10 @@ class RequirementsController extends AbstractController
      * @SWG\Response(
      *     response=400,
      *     description="Request malformed."
+     * )
+     * @SWG\Response(
+     *     response=401,
+     *     description="Unauthorized."
      * )
      * @SWG\Response(
      *     response=404,

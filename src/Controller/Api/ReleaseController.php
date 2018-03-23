@@ -4,13 +4,11 @@ declare(strict_types=1);
 namespace App\Controller\Api;
 
 use App\Entity\Embeddables\ReleaseNotes;
-use App\Entity\MajorVersion;
 use App\Entity\Release;
 use JMS\Serializer\SerializationContext;
-use JMS\Serializer\SerializerInterface;
 use Nelmio\ApiDocBundle\Annotation\Model;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -19,13 +17,14 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Swagger\Annotations as SWG;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Nelmio\ApiDocBundle\Annotation\Security as DocSecurity;
+
 
 /**
  * @Route("/v1/api/release", defaults={"_format"="json"})
  */
 class ReleaseController extends AbstractController
 {
-
 
     /**
      * Get information about all TYPO3 releases or a specific release
@@ -74,6 +73,8 @@ class ReleaseController extends AbstractController
     /**
      * Add new TYPO3 release
      * @Route("/", methods={"POST"})
+     * @Security("has_role('ROLE_ADMIN')")
+     * @DocSecurity(name="Basic")
      * @SWG\Response(
      *     response=201,
      *     description="Created.",
@@ -86,6 +87,10 @@ class ReleaseController extends AbstractController
      * @SWG\Response(
      *     response=400,
      *     description="Request malformed."
+     * )
+     * @SWG\Response(
+     *     response=401,
+     *     description="Unauthorized."
      * )
      * @SWG\Response(
      *     response=409,
@@ -129,6 +134,8 @@ class ReleaseController extends AbstractController
     /**
      * Add TYPO3 Release Notes for Version
      * @Route("/{version}/release-notes", methods={"PUT"})
+     * @Security("has_role('ROLE_ADMIN')")
+     * @DocSecurity(name="Basic")
      * @SWG\Response(
      *     response=204,
      *     description="Returns updated entity."
@@ -136,6 +143,10 @@ class ReleaseController extends AbstractController
      * @SWG\Response(
      *     response=400,
      *     description="Request malformed."
+     * )
+     * @SWG\Response(
+     *     response=401,
+     *     description="Unauthorized."
      * )
      * @SWG\Response(
      *     response=404,
@@ -187,6 +198,10 @@ class ReleaseController extends AbstractController
      *     description="Request malformed."
      * )
      * @SWG\Response(
+     *     response=401,
+     *     description="Unauthorized."
+     * )
+     * @SWG\Response(
      *     response=404,
      *     description="Version not found"
      * )
@@ -212,6 +227,8 @@ class ReleaseController extends AbstractController
     /**
      * Update TYPO3 Release
      * @Route("/{version}", methods={"PATCH"})
+     * @Security("has_role('ROLE_ADMIN')")
+     * @DocSecurity(name="Basic")
      * @SWG\Response(
      *     response=200,
      *     description="Updated Entity",
@@ -223,6 +240,10 @@ class ReleaseController extends AbstractController
      * @SWG\Response(
      *     response=400,
      *     description="Request malformed."
+     * )
+     * @SWG\Response(
+     *     response=401,
+     *     description="Unauthorized."
      * )
      * @SWG\Response(
      *     response=404,
@@ -268,7 +289,9 @@ class ReleaseController extends AbstractController
 
     /**
      * Delete TYPO3 release
+     * @Security("has_role('ROLE_ADMIN')")
      * @Route("/{version}", methods={"DELETE"})
+     * @DocSecurity(name="Basic")
      * @SWG\Response(
      *     response=204,
      *     description="Successfully deleted."
@@ -276,6 +299,10 @@ class ReleaseController extends AbstractController
      * @SWG\Response(
      *     response=400,
      *     description="Request malformed."
+     * )
+     * @SWG\Response(
+     *     response=401,
+     *     description="Unauthorized."
      * )
      * @SWG\Response(
      *     response=404,

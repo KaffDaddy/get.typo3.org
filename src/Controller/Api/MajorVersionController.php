@@ -4,13 +4,11 @@ declare(strict_types=1);
 namespace App\Controller\Api;
 
 
-use App\Controller\Api\AbstractController;
+use Nelmio\ApiDocBundle\Annotation\Security as DocSecurity;
 use App\Entity\MajorVersion;
-use App\Entity\Requirement;
-use Doctrine\Common\Util\Inflector;
 use JMS\Serializer\SerializationContext;
-use JMS\Serializer\SerializerInterface;
 use Nelmio\ApiDocBundle\Annotation\Model;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -98,6 +96,8 @@ class MajorVersionController extends AbstractController
     /**
      * Create new major TYPO3 version
      * @Route("/", methods={"POST"})
+     * @Security("has_role('ROLE_ADMIN')")
+     * @DocSecurity(name="Basic")
      * @SWG\Response(
      *     response=201,
      *     description="Successfully created",
@@ -110,6 +110,10 @@ class MajorVersionController extends AbstractController
      * @SWG\Response(
      *     response=400,
      *     description="Request malformed."
+     * )
+     * @SWG\Response(
+     *     response=401,
+     *     description="Unauthorized."
      * )
      * @SWG\Response(
      *     response=409,
@@ -157,6 +161,8 @@ class MajorVersionController extends AbstractController
     /**
      * Update properties of major TYPO3 version
      * @Route("/{version}", methods={"PATCH"})
+     * @Security("has_role('ROLE_ADMIN')")
+     * @DocSecurity(name="Basic")
      * @SWG\Response(
      *     response=200,
      *     description="Updated Entity",
@@ -168,6 +174,10 @@ class MajorVersionController extends AbstractController
      * @SWG\Response(
      *     response=400,
      *     description="Request malformed."
+     * )
+     * @SWG\Response(
+     *     response=401,
+     *     description="Unauthorized."
      * )
      * @SWG\Response(
      *     response=404,
@@ -209,6 +219,8 @@ class MajorVersionController extends AbstractController
     /**
      * Delete major TYPO3 version
      * @Route("/{version}", methods={"DELETE"})
+     * @Security("has_role('ROLE_ADMIN')")
+     * @DocSecurity(name="Basic")
      * @SWG\Response(
      *     response=204,
      *     description="Successfully deleted."
@@ -216,6 +228,10 @@ class MajorVersionController extends AbstractController
      * @SWG\Response(
      *     response=400,
      *     description="Request malformed."
+     * )
+     * @SWG\Response(
+     *     response=401,
+     *     description="Unauthorized."
      * )
      * @SWG\Response(
      *     response=404,
