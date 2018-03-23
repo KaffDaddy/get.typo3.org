@@ -3,6 +3,10 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation as Serializer;
+use Symfony\Component\Validator\Constraints as Assert;
+use Swagger\Annotations as SWG;
+
 
 /**
  * @ORM\Entity()
@@ -11,39 +15,60 @@ class Requirement implements \JsonSerializable
 {
     /**
      * @ORM\Id
-     * @ORM\Column(type="guid")
-     * @ORM\GeneratedValue(strategy="UUID")
-     */
-    private $uuid;
-
-    /**
      * @ORM\ManyToOne(targetEntity="MajorVersion", inversedBy="requirements")
      * @ORM\JoinColumn(name="version", referencedColumnName="version")
-     * @var string
+     * @var string|\App\Entity\MajorVersion
      */
     private $version;
 
     /**
+     * @param \App\Entity\MajorVersion $version
+     */
+    public function setVersion(MajorVersion $version): void
+    {
+        $this->version = $version;
+    }
+
+    /**
+     * @ORM\Id
      * @ORM\Column(type="string")
      * @var string
+     * @Serializer\Groups({"data", "content", "patch"})
+     * @SWG\Property(example="database")
+     * @Assert\Choice({"php", "database", "hardware", "client"})
      */
     private $category;
 
     /**
+     * @return \App\Entity\MajorVersion|string
+     */
+    public function getVersion()
+    {
+        return $this->version;
+    }
+
+    /**
+     * @ORM\Id
      * @ORM\Column(type="string")
      * @var string
+     * @Serializer\Groups({"data", "content", "patch"})
+     * @SWG\Property(example="mysql")
      */
     private $name;
 
     /**
      * @ORM\Column(type="float", nullable=true)
      * @var float
+     * @Serializer\Groups({"data", "content", "patch"})
+     * @SWG\Property(example="5.5")
      */
     private $min;
 
     /**
      * @ORM\Column(type="float", nullable=true)
      * @var float
+     * @Serializer\Groups({"data", "content", "patch"})
+     * @SWG\Property(example="5.7")
      */
     private $max;
 

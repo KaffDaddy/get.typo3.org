@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Controller;
+namespace App\Controller\Api;
 
 use App\Entity\Embeddables\ReleaseNotes;
 use App\Entity\MajorVersion;
@@ -23,23 +23,14 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 /**
  * @Route("/v1/api/release", defaults={"_format"="json"})
  */
-class ReleaseApiController extends Controller
+class ReleaseController extends AbstractController
 {
 
-    /**
-     * @var \JMS\Serializer\Serializer
-     */
-    private $serializer;
-
-    public function __construct(SerializerInterface $serializer)
-    {
-        $this->serializer = $serializer;
-    }
 
     /**
-     * Get information about TYPO3 releases
+     * Get information about all TYPO3 releases or a specific release
      * @Route("/", methods={"GET"})
-     * @Route("/{version}", methods={"GET"})
+     * @Route("/{version}", methods={"GET"}, name="release_show")
      * @SWG\Response(
      *     response=200,
      *     description="Returns TYPO3 Release(s)",
@@ -68,7 +59,7 @@ class ReleaseApiController extends Controller
         $releaseRepo = $this->getDoctrine()->getRepository(Release::class);
         if ($version) {
             $this->checkVersionFormat($version);
-            $releases = $this->getVersion($version);
+            $releases = $this->getReleaseByVersion($version);
         } else {
             $releases = $releaseRepo->findAll();
         }
@@ -82,10 +73,15 @@ class ReleaseApiController extends Controller
 
     /**
      * Add new TYPO3 release
-     * @Route("/release", methods={"POST"})
+     * @Route("/", methods={"POST"})
      * @SWG\Response(
      *     response=201,
-     *     description="Created."
+     *     description="Created.",
+     *     @SWG\Schema(
+     *          type="object",
+     *          @SWG\Property(property="Status", title="Status", enum={"success"}, type="string"),
+     *          @SWG\Property(property="Location", title="Location (URI)", description="URI of newly created version", type="string", example="/v1/api/major/21"),
+     *      )
      * )
      * @SWG\Response(
      *     response=400,
@@ -121,18 +117,21 @@ class ReleaseApiController extends Controller
             $em = $this->getDoctrine()->getManager();
             $em->persist($release);
             $em->flush();
-            return new JsonResponse(null, Response::HTTP_CREATED);
+            $location = $this->generateUrl('release_show', ['version' => $version]);
+            $header = [
+                'Location' => $location
+            ];
+            return new JsonResponse(['status' => 'success', 'Location' => $location], Response::HTTP_CREATED, $header);
         }
         throw new BadRequestHttpException('Missing or invalid request body.');
     }
 
     /**
      * Add TYPO3 Release Notes for Version
-     * @Route("/{version}/release-notes", methods={"PATCH"})
+     * @Route("/{version}/release-notes", methods={"PUT"})
      * @SWG\Response(
-     *     response=200,
-     *     description="Returns updated entity.",
-     *     @Model(type=\App\Entity\Release::class, groups={"content"})
+     *     response=204,
+     *     description="Returns updated entity."
      * )
      * @SWG\Response(
      *     response=400,
@@ -169,12 +168,8 @@ class ReleaseApiController extends Controller
             $em = $this->getDoctrine()->getManager();
             $em->persist($release);
             $em->flush();
-            $json = $this->serializer->serialize(
-                $release,
-                'json',
-                SerializationContext::create()->setGroups(['content'])
-            );
-            return new JsonResponse($json, Response::HTTP_OK, [], true);
+
+            return new JsonResponse([], Response::HTTP_NO_CONTENT, [], true);
         }
         throw new BadRequestHttpException('Missing or malformed body.');
     }
@@ -204,7 +199,7 @@ class ReleaseApiController extends Controller
     public function getContentForVersion(string $version): JsonResponse
     {
         $this->checkVersionFormat($version);
-        $entity = $this->getVersion($version);
+        $entity = $this->getReleaseByVersion($version);
         $json = $this->serializer->serialize(
             $entity,
             'json',
@@ -213,72 +208,104 @@ class ReleaseApiController extends Controller
         return new JsonResponse($json, Response::HTTP_OK, [], true);
     }
 
+
+    /**
+     * Update TYPO3 Release
+     * @Route("/{version}", methods={"PATCH"})
+     * @SWG\Response(
+     *     response=200,
+     *     description="Updated Entity",
+     *     @SWG\Schema(
+     *         @Model(type=\App\Entity\Release::class, groups={"data", "content"})
+     *
+     *    )
+     * )
+     * @SWG\Response(
+     *     response=400,
+     *     description="Request malformed."
+     * )
+     * @SWG\Response(
+     *     response=404,
+     *     description="Version not found."
+     * )
+     * @SWG\Tag(name="release")
+     * @SWG\Parameter(
+     *     name="release",
+     *     in="body",
+     *     required=true,
+     *     description="May also contain incomplete model with only those properties that shall be updated",
+     *     @Model(type=\App\Entity\Release::class, groups={"data", "content"})
+     * )
+     *
+     * @param null|string $version Specific TYPO3 Version to fetch
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     */
+    public function updateRelease(string $version, Request $request, ValidatorInterface $validator): JsonResponse
+    {
+        $this->checkVersionFormat($version);
+        $content = $request->getContent();
+        if (!empty($content)) {
+            $releaseRepo = $this->getDoctrine()->getRepository(Release::class);
+            $releaseEntity = $releaseRepo->findOneBy(['version' => $version]);
+            if (null === $releaseEntity) {
+                throw new NotFoundHttpException('Release ' . $version . ' not found.');
+            }
+            $data = json_decode($content, true);
+            $this->mapObjects($releaseEntity, $data);
+            $this->validateObject($validator, $releaseEntity);
+            $em = $this->getDoctrine()->getManager();
+            $em->flush();
+
+            $json = $this->serializer->serialize(
+                $releaseEntity,
+                'json',
+                SerializationContext::create()->setGroups(['data', 'content'])
+            );
+            return new JsonResponse($json, Response::HTTP_OK, [], true);
+        }
+        throw new BadRequestHttpException('Missing or invalid request body.');
+    }
+
+    /**
+     * Delete TYPO3 release
+     * @Route("/{version}", methods={"DELETE"})
+     * @SWG\Response(
+     *     response=204,
+     *     description="Successfully deleted."
+     * )
+     * @SWG\Response(
+     *     response=400,
+     *     description="Request malformed."
+     * )
+     * @SWG\Response(
+     *     response=404,
+     *     description="Version not found."
+     * )
+     * @SWG\Tag(name="release")
+     * )
+     *
+     * @param string $version Specific TYPO3 Version to delete
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     */
+    public function deleteRelease(string $version): JsonResponse
+    {
+        $this->checkVersionFormat($version);
+        $entity = $this->getReleaseByVersion($version);
+        $em = $this->getDoctrine()->getManager();
+        $em->remove($entity);
+        $em->flush();
+
+        return $this->json([], Response::HTTP_NO_CONTENT);
+    }
+
     /**
      * @param string $version
      */
-    private function checkVersionConflict(string $version): void
+    protected function checkVersionConflict(string $version): void
     {
         $releaseRepo = $this->getDoctrine()->getRepository(Release::class);
         if ($releaseRepo->findOneBy(['version' => $version])) {
             throw new ConflictHttpException('Version already exists');
-        }
-    }
-
-    /**
-     * @param null|string $version
-     */
-    private function checkVersionFormat(?string $version): void
-    {
-        if (!$this->isValidSemverVersion($version)) {
-            throw new BadRequestHttpException('version malformed.');
-        }
-    }
-
-    private function getMajorVersionByReleaseVersion(string $version): ?MajorVersion
-    {
-        $majorVersion = substr($version, 0, strpos($version, '.'));
-        $mventity = $this->getDoctrine()->getManager()->getRepository(MajorVersion::class)->findOneBy(['version' => $majorVersion]);
-        if (null === $mventity) {
-            throw new BadRequestHttpException('Major version data for version ' . $majorVersion . ' does not exist.');
-        }
-        return $mventity;
-    }
-
-    /**
-     * @param string $version
-     * @return Release
-     */
-    private function getVersion(string $version): Release
-    {
-        $releaseRepo = $this->getDoctrine()->getRepository(Release::class);
-        $releases = $releaseRepo->findOneBy(['version' => $version]);
-        if (!$releases) {
-            throw new NotFoundHttpException();
-        }
-        return $releases;
-    }
-
-    private function isValidSemverVersion(string $version): bool
-    {
-        $success = preg_match(
-            "/^(\d+\.\d+\.\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/",
-            $version,
-            $matches
-        );
-        return ((int)$success === 1);
-    }
-
-    /**
-     * @param \Symfony\Component\Validator\Validator\ValidatorInterface $validator
-     * @param $object
-     */
-    private function validateObject(ValidatorInterface $validator, $object): void
-    {
-        $errors = $validator->validate($object);
-
-        if (\count($errors) > 0) {
-            $errorsString = (string)$errors;
-            throw new BadRequestHttpException($errorsString);
         }
     }
 }
