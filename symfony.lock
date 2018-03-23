@@ -104,6 +104,15 @@
             "ref": "7b6cbc842f8cd3d550815247d12294f6f304a8c4"
         }
     },
+    "nelmio/security-bundle": {
+        "version": "2.4",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "master",
+            "version": "2.4",
+            "ref": "65726efb67ff51d89de38195bc0d230fa811f64d"
+        }
+    },
     "nikic/php-parser": {
         "version": "v4.0.0"
     },
@@ -112,6 +121,9 @@
     },
     "ocramius/proxy-manager": {
         "version": "2.2.0"
+    },
+    "paragonie/random_compat": {
+        "version": "v2.0.11"
     },
     "phar-io/manifest": {
         "version": "1.0.1"
@@ -397,6 +409,9 @@
     },
     "twig/twig": {
         "version": "v2.4.6"
+    },
+    "ua-parser/uap-php": {
+        "version": "v3.5.0"
     },
     "webmozart/assert": {
         "version": "1.3.0"
