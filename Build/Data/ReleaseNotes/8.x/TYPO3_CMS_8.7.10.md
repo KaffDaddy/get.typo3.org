@@ -35,7 +35,7 @@ Changes
 Here is a list of what was fixed since
 [8.7.9](TYPO3_CMS_8.7.9 "wikilink"):
 
-```
+
  * a33acf4e29 [RELEASE] Release of TYPO3 8.7.10
  * 38d6883765 [BUGFIX] Replace calls to the deprecated PHP function each()
  * 6269d46a4a [BUGFIX] Prevent enforcing opened database connection with initCommands
@@ -140,4 +140,3 @@ Here is a list of what was fixed since
  * 2a75f8b60a [BUGFIX] Don&#039;t list records from tables without searchFields on search
  * 272f9565e8 [BUGFIX] Read TER XML entity value complete
  * 5748f7f07e [TASK] Set TYPO3 version to 8.7.10-dev
-```

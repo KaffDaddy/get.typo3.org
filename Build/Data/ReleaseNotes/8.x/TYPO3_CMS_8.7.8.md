@@ -76,8 +76,8 @@ Here is a list of what was fixed since
  * 8f76c5e9a2 [TASK] Provide uid in ElementInformation popup
  * 4c6ebb31d7 [BUGFIX] Do not recalculate PIDs for every query in BE search
  * d679976e13 [BUGFIX] Fix broken redis tests
-`` * bb2cea3eac [BUGFIX] MenuProcessor: Allow sub keys of `addQueryString` ``\
-`` * fbc4425207 [BUGFIX] Fix undefined variable to evaluate `fileFolder_recursions` correctly ``\
+ * bb2cea3eac [BUGFIX] MenuProcessor: Allow sub keys of `addQueryString`
+ * fbc4425207 [BUGFIX] Fix undefined variable to evaluate `fileFolder_recursions` correctly
  * a398a7175f [BUGFIX] Allow multiple calls of ExtensionManagementUtility::loadBaseTca
  * 10075697f8 [BUGFIX] Fix exception in FE when using predefined admPanel config
  * 0e2dd520e0 [BUGFIX] Change username from _cli_scheduler to _cli_
