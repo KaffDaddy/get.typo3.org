@@ -13,7 +13,13 @@ class MajorVersionRepository extends EntityRepository
     {
         $date = (new \DateTimeImmutable())->format('Y-m-d');
         $qb = $this->createQueryBuilder('m');
-        $qb->where($qb->expr()->gte('m.maintainedUntil', $date));
+        $qb->where(
+            $qb->expr()->orX(
+                $qb->expr()->gte('m.maintainedUntil', ':date'),
+                $qb->expr()->isNull('m.maintainedUntil')
+            )
+        );
+        $qb->setParameter('date', $date);
         return $qb->getQuery()->execute();
     }
 
@@ -78,7 +84,6 @@ class MajorVersionRepository extends EntityRepository
     /**
      * As PHP does not like sorting arrays with a mix of int
      * and string keys, we forcibly suffix .0 releases
-     *
      * In versions 7, 8, 9 the json key should only be the first
      * digit -- therefor we add a recognizable suffix that will
      * be later removed in DefaultController.
