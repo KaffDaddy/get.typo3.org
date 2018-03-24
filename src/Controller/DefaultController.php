@@ -71,7 +71,7 @@ class DefaultController extends Controller
      */
     public function releaseJson(): Response
     {
-        $maxAgeForReleases = filemtime($this->releasesJsonFile) + 3600 - time();
+        $maxAgeForReleases = 3600;
         $content = $this->legacyDataService->getReleaseJson();
         $headers = [
             'Content-type' => 'application/json',
@@ -137,7 +137,7 @@ class DefaultController extends Controller
      * @Route("/{requestedVersion}/{requestedFormat}",
      *     methods={"GET"},
      *     name="versionandformat",
-     *     condition="context.getPathInfo() matches '#^\\/?((?:stable|current)|(\\d+\\.\\d+\\.\\d+)(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?)\\/?(?:tar\\.gz|zip)?$#'"
+     *     condition="context.getPathInfo() matches '#^\\/?((?:stable|current)|(?:\\d+)|(typo3_src|typo3_src_dummy|dummy|introduction|government|blank)?-?(\\d+\\.\\d+\\.\\d+)(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?)\\/?(?:tar\\.gz|zip)?$#'"
      * )
      * @param string $requestedVersion
      * @param string $requestedFormat
@@ -145,21 +145,20 @@ class DefaultController extends Controller
      */
     public function download($requestedVersion = 'stable', $requestedFormat = 'tar.gz')
     {
-        $maxAgeForReleases = filemtime($this->releasesJsonFile) + 3600 - time();
         if ($requestedVersion === 'current') {
             $requestedVersion = 'stable';
         }
 
         // Get information about version to download
-        $redirectData = $this->getSourceForgeRedirect($requestedVersion, $requestedFormat, $this->releasesJsonFile);
+        $redirectData = $this->getSourceForgeRedirect($requestedVersion, $requestedFormat);
         if (empty($redirectData)) {
-            $redirectData = $this->getFedextRedirect($requestedVersion, $requestedFormat, $this->releasesJsonFile);
+            $redirectData = $this->getFedextRedirect($requestedVersion, $requestedFormat);
         }
 
         if (!isset($redirectData['url'])) {
             throw $this->createNotFoundException();
         }
-        header('Cache-control: max-age=' . $maxAgeForReleases);
+        header('Cache-control: max-age=3600');
         return $this->redirect($redirectData['url']);
     }
 
@@ -167,10 +166,9 @@ class DefaultController extends Controller
     /**
      * @param string $versionName
      * @param string $format
-     * @param string $releasesFile
      * @return array
      */
-    private function getSourceForgeRedirect($versionName, $format, $releasesFile)
+    private function getSourceForgeRedirect($versionName, $format)
     {
         $packageFiles = [
             // slug (url part) => filename (without Extensions, url-encoded)
@@ -183,7 +181,8 @@ class DefaultController extends Controller
         ];
 
         $result = [];
-        $releases = json_decode(file_get_contents($releasesFile));
+        $content = $this->legacyDataService->getReleaseJson();
+        $releases = json_decode($content);
         // defaults
         $package = 'typo3_src';
 
@@ -247,7 +246,7 @@ class DefaultController extends Controller
                 if (version_compare($version, '6.2.0', '>=') && in_array($package, $legacyPackages)) {
                     $flippedPackageFiles = array_flip($packageFiles);
                     $fallbackPackage = $flippedPackageFiles[$package] . '-6.1.7';
-                    return $this->getSourceForgeRedirect($fallbackPackage, $format, $releasesFile);
+                    return $this->getSourceForgeRedirect($fallbackPackage, $format);
                 }
                 $result = [
                     'url' => 'https://typo3.azureedge.net/typo3/' .
@@ -272,11 +271,11 @@ class DefaultController extends Controller
      * @param string $releasesFile
      * @return array
      */
-    private function getFedextRedirect($versionName, $format, $releasesFile)
+    private function getFedextRedirect($versionName, $format)
     {
         $result = [];
         if ($versionName === 'bootstrap') {
-            $releases = json_decode(file_get_contents($releasesFile));
+            $releases = json_decode($this->legacyDataService->getReleaseJson());
             $result['url'] = sprintf('http://cdn.fedext.net/%spackage.%s', $versionName, $format);
             $result['format'] = $format;
             $result['version'] = $releases->latest_stable;
