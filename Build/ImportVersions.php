@@ -2,7 +2,7 @@
 $db = new SQLite3(__DIR__ . '/../var/gettr.db');
 
 foreach ([7, 8, 9] as $version) {
-    $releasesFileContent = file_get_contents(__DIR__ . '/../Data/' . $version . '.json');
+    $releasesFileContent = file_get_contents(__DIR__ . '/Data/' . $version . '.json');
     $v = json_decode($releasesFileContent, true);
 
 
@@ -30,7 +30,7 @@ foreach ([7, 8, 9] as $version) {
 }
 
 
-$releasesFileContent = file_get_contents(__DIR__ . '/../Data/releases.json');
+$releasesFileContent = file_get_contents(__DIR__ . '/Data/releases.json');
 $v = json_decode($releasesFileContent, true);
 foreach ($v as $major => $content) {
     if (in_array($major, [7, 8, 9], false) || !is_array($content)) {

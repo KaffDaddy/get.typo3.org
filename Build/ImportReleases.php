@@ -1,6 +1,6 @@
 <?php
 
-$releasesFileContent = file_get_contents(__DIR__ . '/../Data/releases.json');
+$releasesFileContent = file_get_contents(__DIR__ . '/Data/releases.json');
 $releaseJson = json_decode($releasesFileContent, true);
 
 $db = new SQLite3(__DIR__ . '/../var/gettr.db');

@@ -6,7 +6,7 @@ use Symfony\Component\Finder\Finder;
 
 $db = new SQLite3(__DIR__ . '/../var/gettr.db');
 
-$directories = Finder::create()->directories()->in(__DIR__ . '/../Data/ReleaseNotes')->sortByName();
+$directories = Finder::create()->directories()->in(__DIR__ . '/Data/ReleaseNotes')->sortByName();
 $result = [];
 foreach ($directories as $directory) {
     $dir = $directory->getRealPath() . DIRECTORY_SEPARATOR;

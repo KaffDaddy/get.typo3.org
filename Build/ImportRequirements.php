@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 
 foreach ([7, 8, 9] as $version) {
-    $releasesFileContent = file_get_contents(__DIR__ . '/../Data/' . $version . '.json');
+    $releasesFileContent = file_get_contents(__DIR__ . '/Data/' . $version . '.json');
     $v = json_decode($releasesFileContent, true);
 
     $db = new SQLite3(__DIR__ . '/../var/gettr.db');
