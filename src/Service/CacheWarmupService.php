@@ -30,18 +30,19 @@ class CacheWarmupService implements CacheWarmerInterface
      */
     private $client;
 
-    private $baseUrl = 'http://gettr.local';
+    private $baseUrl;
     /**
      * @var \Psr\Log\LoggerInterface
      */
     private $logger;
 
-    public function __construct(RouterInterface $router, EntityManagerInterface $entityManager, LoggerInterface $logger)
+    public function __construct(RouterInterface $router, EntityManagerInterface $entityManager, LoggerInterface $logger, string $baseUrl)
     {
         $this->router = $router;
         $this->entityManager = $entityManager;
         $this->client = new Client();
         $this->logger = $logger;
+        $this->baseUrl = $baseUrl;
     }
 
     /**
@@ -64,6 +65,7 @@ class CacheWarmupService implements CacheWarmerInterface
      */
     public function warmUp($cacheDir): void
     {
+
         $routesWithoutArguments = [
             'root',
             'app_api_majorversion_getmajorreleases',
