@@ -3,7 +3,9 @@
         <h1>Release Notes for TYPO3 CMS {{ current.version }}</h1>
         This document contains information about TYPO3 CMS {{ current.version }} which was
         released on {{ current.date|date("d.m.Y") }}.<br/>
+        {% if current.majorVersion.active %}
         <a href="{{ path('version', {'version': current.majorVersion.version }) }}" class="btn btn-primary">Get
             TYPO3 v{{ current.version }} now</a>
+        {% endif %}
     </div>
 </div>

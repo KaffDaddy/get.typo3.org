@@ -2,13 +2,8 @@
 
 {% block content %}
 
-    <div class="container-fluid b_keyvisual">
-        <img src="{{ path('root') }}assets/Gett3o/Assets/keyvisual_image.png" alt="" class="b_keyvisual__image">
-        <div class="b_keyvisual__info">
-            <h1>Release Notes</h1>
-            <h3>TYPO3 {{ current.version }}</h3>
-        </div>
-    </div>
+    {% include 'default/partials/key-visual.html.twig' with {'title': 'Release Notes', 'subtitle': 'TYPO3 ' ~ current.version, 'small': '1'} %}
+
 
     {% include 'default/partials/release-notes/version-selector.twig' %}
 
@@ -16,7 +11,7 @@
         {% if current.releaseNotes.legacyContent %}
             <div class="container b_container--downloads">
                 <div class="col-md-12 b_text__col">
-                    {{ current.releaseNotes.legacyContent|parsedown|raw }}
+                    {{ current.releaseNotes.legacyContent|parsedown|changehighlighter|raw }}
                 </div>
             </div>
         {% else %}

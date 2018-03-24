@@ -162,6 +162,11 @@ class MajorVersion implements \JsonSerializable
         ];
     }
 
+    public function isActive(): bool
+    {
+        return null === $this->maintainedUntil || (new \DateTimeImmutable() <= $this->maintainedUntil);
+    }
+
     /**
      * Specify data which should be serialized to JSON
      *
@@ -179,12 +184,11 @@ class MajorVersion implements \JsonSerializable
         uksort($releaseData, 'version_compare');
         $desc = array_reverse($releaseData);
         $latest = $this->getLatestReleaseVersion($releaseData);
-        $active = (new \DateTimeImmutable() <= $this->maintainedUntil);
         return [
             'releases' => $desc,
             'latest' => $latest,
             'stable' => $latest,
-            'active' => $active,
+            'active' => $this->isActive(),
         ];
     }
 
