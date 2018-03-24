@@ -39,7 +39,7 @@ Changes
 Here is a list of what was fixed since
 [8.7.11](TYPO3_CMS_8.7.11):
 
-```
+
  * 2018-03-22 9e6040c33d [RELEASE] Release of TYPO3 8.7.12 (Oliver Hader)
  * 2018-03-22 00ff302556 Revert "[BUGFIX] Test ifBlank with strlen again" (Oliver Hader)
  * 2018-03-21 31075b95d3 Revert "[BUGFIX] Simulate submit button for rsaauth form submit" (Oliver Hader)
@@ -67,4 +67,4 @@ Here is a list of what was fixed since
  * 2018-03-14 58e987e579 [BUGFIX] Correctly reference sys_file_metadata.language in TCA (Christian Heindl)
  * 2018-03-14 5b4110221a [BUGFIX] Make hidden records searchable in top search (Georg Ringer)
  * 2018-03-13 56df051a7e [TASK] Set TYPO3 version to 8.7.12-dev (Oliver Hader)
-```
+

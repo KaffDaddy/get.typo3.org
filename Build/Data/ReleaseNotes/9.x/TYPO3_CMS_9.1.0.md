@@ -53,7 +53,7 @@ Changes
 Here is a list of what was fixed since
 [9.0.0](TYPO3_CMS_9.0.0 "wikilink"):
 
-```
+
  * 2018-01-30 a06e0787f1 [RELEASE] Release of TYPO3 9.1.0 (Oliver Hader)
  * 2018-01-30 8e71dd86eb [BUGFIX] Avoid JS error when using 'eval' => 'int,nospace' in TCA (Stephan Großberndt)
  * 2018-01-30 8809441a72 [BUGFIX] Fix example code for TCA "fieldControl" (Stephan Großberndt)
@@ -109,4 +109,5 @@ Here is a list of what was fixed since
  * 2018-01-19 0919a7cf11 [BUGFIX] Extension config: Write LocalConfiguration only if needed (Christian Kuhn)
  * 2018-01-19 d087349106 [TASK] Specific exception in ArrayUtility::getValueByPath() (Christian Kuhn)
  * 2018-01-19 033a5922f9 [TASK] Minor annotation and sanitation improvements (Christian Kuhn)
-```
+
+
